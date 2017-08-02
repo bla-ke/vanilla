@@ -49,6 +49,10 @@ import android.util.Log;
  */
 public final class CoverView extends View implements Handler.Callback {
 	/**
+	 * If >= 0, perform the switch after this delay
+	 */
+	private final static int ASYNC_SWITCH = -1;
+	/**
 	 * Maximum amount of pixels we are allowed to scroll to consider
 	 * touch events to be normal touches.
 	 */
@@ -328,7 +332,7 @@ public final class CoverView extends View implements Handler.Callback {
 				mScrollX = getWidth();
 
 				int coverIntent = mScroller.getCoverIntent();
-				if (coverIntent != 0)
+				if (coverIntent != 0 && ASYNC_SWITCH < 0)
 					mHandler.sendMessage(mHandler.obtainMessage(MSG_SHIFT_SONG, coverIntent, 0));
 
 				DEBUG("Scroll finished, invalidating all snapshot bitmaps!");
@@ -373,7 +377,10 @@ public final class CoverView extends View implements Handler.Callback {
 						// ..and fix up the scrolling position.
 						mScrollX -= coverIntent * getWidth();
 						// all done: we can now trigger the song jump
-						mHandler.sendMessage(mHandler.obtainMessage(MSG_SHIFT_SONG, coverIntent, 0));
+						if (ASYNC_SWITCH < 0 || mHandler.hasMessages(MSG_SHIFT_SONG)) {
+							mHandler.removeMessages(MSG_SHIFT_SONG);
+							mHandler.sendMessage(mHandler.obtainMessage(MSG_SHIFT_SONG, coverIntent, 0));
+						}
 					}
 
 					// There is no running animation (anymore?), so we can drop the cache.
@@ -449,6 +456,8 @@ public final class CoverView extends View implements Handler.Callback {
 
 				mBitmapBucket.prepareScroll(whichCover);
 				mScroller.handleFling(velocityX, mScrollX, scrollTargetX, whichCover);
+				if (ASYNC_SWITCH >= 0)
+					mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_SHIFT_SONG, whichCover, 0), ASYNC_SWITCH);
 				mHandler.removeMessages(MSG_LONG_CLICK);
 
 				invalidate = true;
