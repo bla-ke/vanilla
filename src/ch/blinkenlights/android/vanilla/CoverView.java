@@ -359,9 +359,25 @@ public final class CoverView extends View implements Handler.Callback {
 					mHandler.sendEmptyMessageDelayed(MSG_LONG_CLICK, ViewConfiguration.getLongPressTimeout());
 				} else {
 					// Animation was still running while we got a new down event
-					// Abort the current animation and undo our bitmap prepareScroll()
+					// Abort the current animation!
+
+					final int coverIntent = mScroller.getCoverIntent();
 					mBitmapBucket.abortScroll();
 					mScroller.abortAnimation();
+
+					if (coverIntent != 0) {
+						// The running animation was actually supposed to switch to a new song.
+						// Do this right now as the animation is canceled:
+						// First, set our non-cached covers to a sane version
+						mBitmapBucket.prepareScroll(coverIntent);
+						// ..and fix up the scrolling position.
+						mScrollX -= coverIntent * getWidth();
+						// all done: we can now trigger the song jump
+						mHandler.sendMessage(mHandler.obtainMessage(MSG_SHIFT_SONG, coverIntent, 0));
+					}
+
+					// There is no running animation (anymore?), so we can drop the cache.
+					mBitmapBucket.finalizeScroll();
 				}
 
 				mLastMotionX = mInitialMotionX = x;
