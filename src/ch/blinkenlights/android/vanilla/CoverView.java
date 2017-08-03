@@ -147,7 +147,7 @@ public final class CoverView extends View implements Handler.Callback {
 	 * Configures and sets up this view
 	 */
 	public void setup(Looper looper, Callback callback, int style) {
-		mHandler = new Handler(looper, this); // FIXME: we need to destroy the handler
+		mHandler = new Handler(looper, this);
 		mCallback = callback;
 		mCoverStyle = style;
 	}
@@ -482,7 +482,7 @@ public final class CoverView extends View implements Handler.Callback {
 	}
 
 	private void DEBUG(String s) {
-		Log.v("VanillaMusicCover", s);
+		// Log.v("VanillaMusicCover", s);
 	}
 
 
